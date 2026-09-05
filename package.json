@@ -1,0 +1,34 @@
+{
+  "name": "agentic-patterns",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "pattern-1": "node --env-file-if-exists=.env --import tsx src/pattern-1-pipeline.ts",
+    "pattern-2": "node --env-file-if-exists=.env --import tsx src/pattern-2-router.ts",
+    "pattern-3": "node --env-file-if-exists=.env --import tsx src/pattern-3-reflection.ts",
+    "pattern-4": "node --env-file-if-exists=.env --import tsx src/pattern-4-orchestrator-workers.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

@@ -36,21 +36,9 @@ export const CriticaSchema = z.object({
   problemas: z.array(z.string()),
 });
 
-export type Critica = z.infer<typeof CriticaSchema>;
-
-export interface ResultadoMejora {
-  texto: string;
-  rondas: number;
-  criticas: Critica[];
-  aprobado: boolean;
-}
 
 // ── El crítico: evalúa el texto contra la rúbrica ──────────────
-async function criticar(
-  client: Anthropic,
-  texto: string,
-  rubrica: string[],
-): Promise<Critica> {
+async function criticar(client: Anthropic, texto: string, rubrica: string[]) {
   const respuesta = await client.messages.parse({
     model: DEFAULT_MODEL,
     max_tokens: MAX_TOKENS,
@@ -78,8 +66,8 @@ async function criticar(
 async function reescribir(
   client: Anthropic,
   texto: string,
-  problemas: string[],
-): Promise<string> {
+  problemas: string[]
+) {
   const respuesta = await client.messages.create({
     model: DEFAULT_MODEL,
     max_tokens: MAX_TOKENS,
@@ -104,10 +92,10 @@ export async function mejorarConCritica(
   rubrica: string[],
   client: Anthropic = makeClient(),
   maxRondas = 3,
-  notaMinima = 8,
-): Promise<ResultadoMejora> {
+  notaMinima = 8
+) {
   let texto = borradorInicial;
-  const criticas: Critica[] = [];
+   const criticas: Array<z.infer<typeof CriticaSchema>>= [];
 
   for (let ronda = 1; ronda <= maxRondas; ronda += 1) {
     escribirPaso("🧐", `Ronda ${ronda}: el crítico evalúa el texto…`);
@@ -139,7 +127,7 @@ async function main(): Promise<void> {
       "evita palabras vacías como 'cosas'",
       "máximo 30 palabras",
       "Menciona el nombre de la marca del producto",
-    ],
+    ]
   );
   escribirPaso("✅", `Texto final (${resultado.rondas} rondas)`);
   console.log(resultado.texto);

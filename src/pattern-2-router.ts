@@ -43,27 +43,8 @@ export const DEPARTAMENTOS = {
 
 export type Departamento = keyof typeof DEPARTAMENTOS;
 
-// El router devuelve SIEMPRE esta estructura: a qué departamento
-// va el mensaje, con cuánta seguridad y por qué.
-export const DecisionSchema = z.object({
-  departamento: z.enum(["facturacion", "tecnico", "devoluciones"]),
-  confianza: z.number().min(0).max(1),
-  motivo: z.string(),
-});
-
-export type Decision = z.infer<typeof DecisionSchema>;
-
-export interface Atencion {
-  departamento: Departamento | "humano";
-  confianza: number;
-  respuesta: string;
-}
-
 // ── Paso 1: clasificar el mensaje ──────────────────────────────
-async function clasificar(
-  client: Anthropic,
-  mensaje: string,
-): Promise<Decision> {
+async function clasificar(client: Anthropic, mensaje: string) {
   const respuesta = await client.messages.parse({
     model: DEFAULT_MODEL,
     max_tokens: MAX_TOKENS,
@@ -73,7 +54,15 @@ async function clasificar(
     messages: [{ role: "user", content: mensaje }],
     output_config: {
       effort: "low",
-      format: zodOutputFormat(DecisionSchema),
+      // El router devuelve SIEMPRE esta estructura: a qué departamento
+      // va el mensaje, con cuánta seguridad y por qué.
+      format: zodOutputFormat(
+        z.object({
+          departamento: z.enum(["facturacion", "tecnico", "devoluciones"]),
+          confianza: z.number().min(0).max(1),
+          motivo: z.string(),
+        })
+      ),
     },
   });
 
@@ -86,8 +75,8 @@ async function clasificar(
 async function responderComoEspecialista(
   client: Anthropic,
   departamento: Departamento,
-  mensaje: string,
-): Promise<string> {
+  mensaje: string
+) {
   const respuesta = await client.messages.create({
     model: DEFAULT_MODEL,
     max_tokens: MAX_TOKENS,
@@ -102,8 +91,8 @@ async function responderComoEspecialista(
 export async function atenderConsulta(
   mensaje: string,
   client: Anthropic = makeClient(),
-  confianzaMinima = 0.7,
-): Promise<Atencion> {
+  confianzaMinima = 0.7
+) {
   escribirPaso("🔀", "El router clasifica el mensaje…");
   const decision = await clasificar(client, mensaje);
   console.log(`   Departamento: ${decision.departamento}`);
@@ -122,11 +111,14 @@ export async function atenderConsulta(
     };
   }
 
-  escribirPaso("🎯", `Solo se activa el especialista de ${decision.departamento}`);
+  escribirPaso(
+    "🎯",
+    `Solo se activa el especialista de ${decision.departamento}`
+  );
   const respuesta = await responderComoEspecialista(
     client,
     decision.departamento,
-    mensaje,
+    mensaje
   );
 
   return {
@@ -138,7 +130,7 @@ export async function atenderConsulta(
 
 async function main(): Promise<void> {
   const resultado = await atenderConsulta(
-    "Me habéis cobrado dos veces el mismo pedido, ¿qué hago?",
+    "Me habéis cobrado dos veces el mismo pedido, ¿qué hago?"
   );
   escribirPaso("✅", `Respuesta de ${resultado.departamento}`);
   console.log(resultado.respuesta);
